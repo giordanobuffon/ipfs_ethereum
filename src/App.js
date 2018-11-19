@@ -18,7 +18,7 @@ class App extends Component {
             transactionHash: '',
             txReceipt: '',
             key: '',
-            arquivos: [],
+            files: [],
             msgEncrypto: '',
             msgDecrypto: '',
             publicKeyJohn: "-----BEGIN PUBLIC KEY-----\n" +
@@ -134,28 +134,27 @@ class App extends Component {
         const accounts = await web3.eth.getAccounts();
         storehash.methods.getTodosArquivosUsuario().call({
             from: accounts[0]
-        }, (error, result) => {
-            if (error) {
-                console.log("error: ", error);
+        }, (errAllFiles, resAllFiles) => {
+            if (errAllFiles) {
+                console.log("error getFilesFromSC: ", errAllFiles);
             } else {
-                console.log("result: ", result);
-
-                for (let i = 0; i < result.length; i++) {
-                    storehash.methods.getArquivo(i).call({
+                console.log("result: ", resAllFiles);
+                for (let i = 0; i < resAllFiles.length; i++) {
+                    storehash.methods.getArquivo(resAllFiles[i]).call({
                         from: accounts[0]
-                    }, (error, result) => {
-                        if (error) {
-                            console.log("error: ", error);
+                    }, (errGetFile, resGetFile) => {
+                        if (errGetFile) {
+                            console.log("error getFile: ", errGetFile);
                         } else {
-                            let arquivo = {
+                            let file = {
                                 id: i,
-                                nome: result[0],
-                                usuariosAcesso: result[1],
-                                hash: result[2]
+                                name: resGetFile[0],
+                                usersWithAccess: resGetFile[1],
+                                hash: resGetFile[2]
                             };
-                            let newArray = this.state.arquivos.slice();
-                            newArray.push(arquivo);
-                            this.setState({arquivos: newArray});
+                            let newArray = this.state.files.slice();
+                            newArray.push(file);
+                            this.setState({files: newArray});
                         }
                     });
                 }
@@ -171,11 +170,11 @@ class App extends Component {
                     <h1>Ethereum e IPFS</h1>
                 </header>
                 <hr/>
-                {this.state.arquivos.length > 0 ?
-                    this.state.arquivos.map((arquivo) => {
+                {this.state.files.length > 0 ?
+                    this.state.files.map((arquivo) => {
                         return <p key={arquivo.id}>
-                            {arquivo.nome}.  .
-                            {arquivo.usuariosAcesso}.  .
+                            {arquivo.name}.  .
+                            {arquivo.usersWithAccess}.  .
                             {arquivo.hash}
                         </p>
                     }) : ""

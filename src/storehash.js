@@ -1,6 +1,6 @@
 import web3 from './web3';
 //Your contract address
-const address = '0x2664a1e660d9792893e8e060ee6c47830c01c243';
+const address = '0xD2c0b6BABd175ABcF937b12AE3c634fb1229605d';
 //Your contract ABI
 const abi = [
     {
@@ -44,12 +44,6 @@ const abi = [
         "type": "function"
     },
     {
-        "inputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "constructor"
-    },
-    {
         "constant": true,
         "inputs": [
             {
@@ -89,6 +83,12 @@ const abi = [
         "payable": false,
         "stateMutability": "view",
         "type": "function"
+    },
+    {
+        "inputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "constructor"
     }
 ];
 

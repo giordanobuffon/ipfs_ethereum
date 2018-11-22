@@ -3,6 +3,8 @@ import web3 from './web3';
 import ipfs from './ipfs';
 import storehash from './storehash';
 import {Button} from 'reactstrap';
+import AppBar from "./AppBar";
+import InteractiveList from "./InteractiveList";
 
 class App extends Component {
     constructor(props) {
@@ -166,20 +168,7 @@ class App extends Component {
     render() {
         return (
             <div className="App">
-                <header className="App-header">
-                    <h1>Ethereum e IPFS</h1>
-                </header>
-                <hr/>
-                {this.state.files.length > 0 ?
-                    this.state.files.map((arquivo) => {
-                        return <p key={arquivo.id}>
-                            {arquivo.name}.  .
-                            {arquivo.usersWithAccess}.  .
-                            {arquivo.hash}
-                        </p>
-                    }) : ""
-                }
-                <hr/>
+                <AppBar/>
                 <h3> Escolha um arquivo para enviar para a blockchain</h3>
                 <form>
                     <input
@@ -197,10 +186,10 @@ class App extends Component {
                     type="file"
                     onChange={this.getKey}
                 />
-                <p>{this.state.privateKey}</p>
                 <Button onClick={this.decrypto}>Decrypto</Button>
                 <p>{this.state.msgDecrypto}</p>
                 <hr/>
+                <InteractiveList files={this.state.files}/>
             </div>
         );
     }

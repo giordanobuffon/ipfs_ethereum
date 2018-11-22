@@ -3,9 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@material-ui/core": "^3.5.1",
     "hybrid-crypto-js": "^0.1.6",
+    "prop-types": "latest",
     "react": "^16.5.2",
     "react-dom": "^16.5.2",
+    "react-file-input": "^0.2.5",
     "react-native": "^0.57.5",
     "react-scripts": "2.0.4",
     "reactstrap": "^6.5.0"
@@ -24,5 +27,8 @@
     "not dead",
     "not ie <= 11",
     "not op_mini all"
-  ]
+  ],
+  "devDependencies": {
+    "@material-ui/icons": "^3.0.1"
+  }
 }

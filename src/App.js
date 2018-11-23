@@ -5,6 +5,8 @@ import storehash from './storehash';
 import {Button} from 'reactstrap';
 import AppBar from "./AppBar";
 import InteractiveList from "./InteractiveList";
+import Btn from "./Btn";
+import Typography from "@material-ui/core/es/Typography/Typography";
 
 class App extends Component {
     constructor(props) {
@@ -52,12 +54,15 @@ class App extends Component {
 
     //Take file input from user
     captureFile = (event) => {
+        console.log("capture");
         event.stopPropagation();
         event.preventDefault();
         const file = event.target.files[0];
-        let reader = new window.FileReader();
-        reader.readAsArrayBuffer(file);
-        reader.onloadend = () => this.convertToBuffer(reader)
+        if (file) {
+            let reader = new window.FileReader();
+            reader.readAsArrayBuffer(file);
+            reader.onloadend = () => this.convertToBuffer(reader)
+        }
     };
 
     //Convert the file to buffer to store on IPFS
@@ -69,18 +74,6 @@ class App extends Component {
     };
 
     encrypto = async () => {
-        // const accounts = await web3.eth.getAccounts();
-        // const ethAddress = await storehash.options.address;
-        // this.setState({ethAddress});
-        // // const a = await storehash.methods.getHash().call;
-        // // console.log("a: ", a);
-        // storehash.methods.getHash().call({
-        //         from: accounts[0]
-        //     }, (error, transactionHash) => {
-        //         console.log(transactionHash);
-        //         this.setState({msgOrigin: transactionHash});
-        //     });
-
         const encrypted = this.crypt.encrypt(this.state.publicKeyJohn, this.state.buffer);
         console.log(encrypted.toString());
         this.setState({msgEncrypto: encrypted});
@@ -169,7 +162,9 @@ class App extends Component {
         return (
             <div className="App">
                 <AppBar/>
-                <h3> Escolha um arquivo para enviar para a blockchain</h3>
+                <Typography variant="subtitle1" color="inherit">
+                    Escolha um arquivo para enviar para a blockchain
+                </Typography>
                 <form>
                     <input
                         type="file"
@@ -190,6 +185,7 @@ class App extends Component {
                 <p>{this.state.msgDecrypto}</p>
                 <hr/>
                 <InteractiveList files={this.state.files}/>
+                <Btn onChange={this.captureFile}/>
             </div>
         );
     }

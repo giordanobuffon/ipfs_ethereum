@@ -18,7 +18,7 @@ function SimpleAppBar(props) {
         <div className={classes.root}>
             <AppBar position="static" color="primary">
                 <Toolbar>
-                    <Typography variant="h6" color="inherit">
+                    <Typography variant="h5" color="inherit">
                         Ethereum + IPFS
                     </Typography>
                 </Toolbar>

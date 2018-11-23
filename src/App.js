@@ -24,7 +24,7 @@ class App extends Component {
             key: '',
             files: [],
             msgEncrypto: '',
-            msgDecrypto: '',
+            msgDecrypto: 'nada',
             publicKeyJohn: "-----BEGIN PUBLIC KEY-----\n" +
             "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCiv9f2i3ENZTNtLisetKS8ETKb\n" +
             "A04+Hs9dgy46yJGmqlh3sjRCT6NxxHIq59FF0AWx3g21oOSJbVyh+mzFLuGOILMk\n" +
@@ -54,13 +54,15 @@ class App extends Component {
 
     //Take file input from user
     captureFile = (event) => {
-        console.log("capture");
         event.stopPropagation();
         event.preventDefault();
         const file = event.target.files[0];
+        console.log(file);
+        console.log("capture");
         if (file) {
             let reader = new window.FileReader();
             reader.readAsArrayBuffer(file);
+            console.log(file);
             reader.onloadend = () => this.convertToBuffer(reader)
         }
     };
@@ -165,12 +167,7 @@ class App extends Component {
                 <Typography variant="subtitle1" color="inherit">
                     Escolha um arquivo para enviar para a blockchain
                 </Typography>
-                <form>
-                    <input
-                        type="file"
-                        onChange={this.captureFile}
-                    />
-                </form>
+                <Btn captureFile={this.captureFile}/>
                 <hr/>
                 <Button onClick={this.encrypto}>Encrypto</Button>
                 <p>IPFS Hash</p>
@@ -185,7 +182,6 @@ class App extends Component {
                 <p>{this.state.msgDecrypto}</p>
                 <hr/>
                 <InteractiveList files={this.state.files}/>
-                <Btn onChange={this.captureFile}/>
             </div>
         );
     }

@@ -7,7 +7,7 @@ import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
 import IconButton from '@material-ui/core/IconButton';
 import Grid from '@material-ui/core/Grid';
-import DeleteIcon from '@material-ui/icons/Delete';
+import ShareIcon from '@material-ui/icons/Share';
 import CloudDownloadIcon from '@material-ui/icons/CloudDownload';
 
 const styles = theme => ({
@@ -49,9 +49,16 @@ class InteractiveList extends React.Component {
                                                     />
                                                     <ListItemSecondaryAction>
                                                         <IconButton
-                                                            aria-label="Delete"
+                                                            aria-label="Share"
                                                             onClick={() => {
-                                                                console.log('click')
+                                                                console.log('click share')
+                                                            }}>
+                                                            <ShareIcon/>
+                                                        </IconButton>
+                                                        <IconButton
+                                                            aria-label="Download"
+                                                            onClick={() => {
+                                                                console.log('click download')
                                                             }}>
                                                             <CloudDownloadIcon/>
                                                         </IconButton>

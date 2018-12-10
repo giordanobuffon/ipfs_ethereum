@@ -28,16 +28,11 @@ class App extends Component {
             msgDecrypto: 'nada',
             userName: '',
             pubKey: '',
-            publicKeyJohn: "-----BEGIN PUBLIC KEY-----\n" +
-            "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCiv9f2i3ENZTNtLisetKS8ETKb\n" +
-            "A04+Hs9dgy46yJGmqlh3sjRCT6NxxHIq59FF0AWx3g21oOSJbVyh+mzFLuGOILMk\n" +
-            "p0tZGdEGP6ybG53eRKlXk/PL99H/U9IT7+9QxhNPpEVjTikmI3Ns29I4g6GqNyEI\n" +
-            "wy8wDzYMTmjlzTw3TwIDAQAB\n" +
-            "-----END PUBLIC KEY-----",
             privateKey: ''
         };
 
         this.getFilesFromSC();
+
     };
 
     // Take file input from user
@@ -59,11 +54,6 @@ class App extends Component {
         const buffer = await Buffer.from(reader.result);
         //set this buffer-using es6 syntax
         this.setState({buffer});
-    };
-
-    encrypto = async (accounts) => {
-
-
     };
 
     decrypto = async () => {
@@ -92,62 +82,39 @@ class App extends Component {
             const accounts = await web3.eth.getAccounts();
             storehash.methods.getUser(accounts[0]).call({
                     from: accounts[0]
-                }, (errGetUser, resGetUser) => {
+                }, async (errGetUser, resGetUser) => {
                     if (errGetUser) {
                         console.log("error getUser: ", errGetUser);
                     } else {
                         this.setState({userName: resGetUser[0]});
-                        // console.log("userName: ", resGetUser[0]);
                         this.setState({pubKey: resGetUser[1]});
-                        console.log("pubKey: ", resGetUser[1]);
+                        const encrypted = this.crypt.encrypt(this.state.pubKey, this.state.buffer);
+                        this.setState({msgEncrypto: encrypted});
+
+                        const buffer = await Buffer.from(encrypted);
+                        await ipfs.add(buffer, (err, ipfsHash) => {
+                            if (err) {
+                                console.log(err);
+                            } else {
+                                console.log(ipfsHash);
+                                //setState by setting ipfsHash to ipfsHash[0].hash
+                                this.setState({ipfsHash: ipfsHash[0].hash});
+                                storehash.methods.addFile(this.state.fileName, this.state.ipfsHash).send({
+                                    from: accounts[0]
+                                }, (errorAddFile, transactionHash) => {
+                                    if (errorAddFile) {
+                                        console.log("error addFile: ", errorAddFile);
+                                    } else {
+                                        console.log(transactionHash);
+                                        this.setState({transactionHash});
+                                    }
+                                });
+                            }
+                        })
                     }
                 }
             );
-
-            const encrypted = this.crypt.encrypt(this.state.publicKeyJohn, this.state.buffer);
-            // console.log(encrypted.toString());
-            this.setState({msgEncrypto: encrypted});
-
-            const buffer = await Buffer.from(encrypted);
-            await ipfs.add(buffer, (err, ipfsHash) => {
-                if (err) {
-                    console.log(err);
-                } else {
-                    console.log(ipfsHash);
-                    //setState by setting ipfsHash to ipfsHash[0].hash
-                    this.setState({ipfsHash: ipfsHash[0].hash});
-                    storehash.methods.addFile(this.state.fileName, this.state.ipfsHash).send({
-                        from: accounts[0]
-                    }, (error, transactionHash) => {
-                        console.log(transactionHash);
-                        this.setState({transactionHash});
-                    });
-                }
-            })
         }
-    };
-
-    onSubmit = async (event) => {
-        event.preventDefault();
-        //bring in user's metamask account address
-        const accounts = await web3.eth.getAccounts();
-        //obtain contract address from storehash.js
-        const ethAddress = await storehash.options.address;
-        this.setState({ethAddress});
-        //save document to IPFS,return its hash#, and set hash# to state
-        await ipfs.add(this.state.buffer, (err, ipfsHash) => {
-            console.log(err, ipfsHash);
-            //setState by setting ipfsHash to ipfsHash[0].hash
-            this.setState({ipfsHash: ipfsHash[0].hash});
-            // call Ethereum contract method "sendHash" and .send IPFS hash to etheruem contract
-            //return the transaction hash from the ethereum contract
-            storehash.methods.setHash(this.state.ipfsHash).send({
-                from: accounts[0]
-            }, (error, transactionHash) => {
-                console.log(transactionHash);
-                this.setState({transactionHash});
-            });
-        })
     };
 
     getFilesFromSC = async () => {
@@ -195,7 +162,6 @@ class App extends Component {
                 </Typography>
                 <Btn uploadFile={this.uploadFile}/>
                 <hr/>
-                <Button onClick={this.encrypto}>Encrypto</Button>
                 <p>IPFS Hash</p>
                 <a href={`https://ipfs.io/ipfs/` + this.state.ipfsHash} target="_blank"
                    rel="noopener noreferrer">{this.state.ipfsHash}</a>

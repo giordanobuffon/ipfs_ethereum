@@ -26,7 +26,7 @@ function ContainedButtons(props) {
                 id="contained-button-file"
                 multiple
                 type="file"
-                onChange={props.captureFile}
+                onChange={props.uploadFile}
             />
             <label htmlFor="contained-button-file">
                 <Button variant="contained" component="span" className={classes.button}>

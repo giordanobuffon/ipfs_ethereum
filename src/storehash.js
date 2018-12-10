@@ -1,25 +1,21 @@
 import web3 from './web3';
 //Your contract address
-const address = '0xD2c0b6BABd175ABcF937b12AE3c634fb1229605d';
+const address = '0x52b0b7e238743289f41659d7ec2d7f76ad93aaf7';
 //Your contract ABI
 const abi = [
     {
         "constant": false,
         "inputs": [
             {
-                "name": "i",
-                "type": "uint256"
-            },
-            {
-                "name": "nUser",
-                "type": "address"
+                "name": "_name",
+                "type": "string"
             },
             {
                 "name": "_hash",
                 "type": "string"
             }
         ],
-        "name": "compartilharArquivo",
+        "name": "addFile",
         "outputs": [],
         "payable": false,
         "stateMutability": "nonpayable",
@@ -29,19 +25,29 @@ const abi = [
         "constant": false,
         "inputs": [
             {
-                "name": "_nome",
-                "type": "string"
+                "name": "i",
+                "type": "uint256"
+            },
+            {
+                "name": "_aUser",
+                "type": "address"
             },
             {
                 "name": "_hash",
                 "type": "string"
             }
         ],
-        "name": "criarArquivo",
+        "name": "shareFile",
         "outputs": [],
         "payable": false,
         "stateMutability": "nonpayable",
         "type": "function"
+    },
+    {
+        "inputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "constructor"
     },
     {
         "constant": true,
@@ -51,7 +57,7 @@ const abi = [
                 "type": "uint256"
             }
         ],
-        "name": "getArquivo",
+        "name": "getFile",
         "outputs": [
             {
                 "name": "",
@@ -73,7 +79,7 @@ const abi = [
     {
         "constant": true,
         "inputs": [],
-        "name": "getTodosArquivosUsuario",
+        "name": "getFilesUser",
         "outputs": [
             {
                 "name": "",
@@ -85,10 +91,27 @@ const abi = [
         "type": "function"
     },
     {
-        "inputs": [],
+        "constant": true,
+        "inputs": [
+            {
+                "name": "_aUser",
+                "type": "address"
+            }
+        ],
+        "name": "getUser",
+        "outputs": [
+            {
+                "name": "",
+                "type": "string"
+            },
+            {
+                "name": "",
+                "type": "string"
+            }
+        ],
         "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "constructor"
+        "stateMutability": "view",
+        "type": "function"
     }
 ];
 

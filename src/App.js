@@ -18,6 +18,7 @@ class App extends Component {
         this.state = {
             ipfsHash: null,
             buffer: '',
+            fileName: '',
             ethAddress: '',
             transactionHash: '',
             txReceipt: '',
@@ -25,6 +26,8 @@ class App extends Component {
             files: [],
             msgEncrypto: '',
             msgDecrypto: 'nada',
+            userName: '',
+            pubKey: '',
             publicKeyJohn: "-----BEGIN PUBLIC KEY-----\n" +
             "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCiv9f2i3ENZTNtLisetKS8ETKb\n" +
             "A04+Hs9dgy46yJGmqlh3sjRCT6NxxHIq59FF0AWx3g21oOSJbVyh+mzFLuGOILMk\n" +
@@ -32,42 +35,25 @@ class App extends Component {
             "wy8wDzYMTmjlzTw3TwIDAQAB\n" +
             "-----END PUBLIC KEY-----",
             privateKey: ''
-            // "-----BEGIN RSA PRIVATE KEY-----\n" +
-            // "MIICXAIBAAKBgQCiv9f2i3ENZTNtLisetKS8ETKbA04+Hs9dgy46yJGmqlh3sjRC\n" +
-            // "T6NxxHIq59FF0AWx3g21oOSJbVyh+mzFLuGOILMkp0tZGdEGP6ybG53eRKlXk/PL\n" +
-            // "99H/U9IT7+9QxhNPpEVjTikmI3Ns29I4g6GqNyEIwy8wDzYMTmjlzTw3TwIDAQAB\n" +
-            // "AoGARFLXnkgx4NbAfTBpp81cbxulLBB6M3gJxA9DRChZhSd0VmO4rrHyQtuetkZ1\n" +
-            // "w6IuEdrP1JVD/DGuNs4EBc/Fno7wCb4EkF4nNqHTdFzY29xpuS85q/2y9HwCrA3E\n" +
-            // "ZiLJmHnxsNlnZAwUxyhuVJ7K1g8A6JktttCMG/RzZ5/U4tECQQD8lt+600zY0qF7\n" +
-            // "YEXYJTJXlwC7y/pyNwcR5EHfPARRtgH3XBHogpJY0qE8/HY9fFNKnMbm/7HmInnD\n" +
-            // "VnCTS5LHAkEApPJrcdIpBG7x9xK1FJoA8ybGrYz6H8Z6Du2y8j3uHzEaiods2rX2\n" +
-            // "jBCitK2IwrQaUuykGSWe35HxsBUzvNovOQJAZ4DPhvfk6ohNIYhOtoZvfZLj+xBX\n" +
-            // "vQutevhkwbwPLQh+/8SblgJDQ+Bzr9DoBsP2QYHCw4+Nb3c7G/9EvCbgqwJAQSDr\n" +
-            // "Jc0anwKDjdAYKeNJHrkf16UDmgpPZZebgaTMYgqMdUhVxeH1UIa9B+RBTMe6YSXJ\n" +
-            // "AZjmK1a//IvSmu33mQJBAOcthb3RWmMU30HDO/D7K2LLTTfdrG3JwDuYovrmuhrh\n" +
-            // "96WXzN9TAXbOVAAPYU53/dIijKn5WUtNSgBpwSOS57Q=\n" +
-            // "-----END RSA PRIVATE KEY-----"
         };
 
         this.getFilesFromSC();
     };
 
-    //Take file input from user
+    // Take file input from user
     captureFile = (event) => {
         event.stopPropagation();
         event.preventDefault();
         const file = event.target.files[0];
-        console.log(file);
-        console.log("capture");
+        this.setState({fileName: file.name});
         if (file) {
             let reader = new window.FileReader();
             reader.readAsArrayBuffer(file);
-            console.log(file);
             reader.onloadend = () => this.convertToBuffer(reader)
         }
     };
 
-    //Convert the file to buffer to store on IPFS
+    // Convert the file to buffer to store on IPFS
     convertToBuffer = async (reader) => {
         //file is converted to a buffer for upload to IPFS
         const buffer = await Buffer.from(reader.result);
@@ -75,16 +61,9 @@ class App extends Component {
         this.setState({buffer});
     };
 
-    encrypto = async () => {
-        const encrypted = this.crypt.encrypt(this.state.publicKeyJohn, this.state.buffer);
-        console.log(encrypted.toString());
-        this.setState({msgEncrypto: encrypted});
-        const buffer = await Buffer.from(encrypted);
-        await ipfs.add(buffer, (err, ipfsHash) => {
-            console.log(err, ipfsHash);
-            //setState by setting ipfsHash to ipfsHash[0].hash
-            this.setState({ipfsHash: ipfsHash[0].hash});
-        })
+    encrypto = async (accounts) => {
+
+
     };
 
     decrypto = async () => {
@@ -101,6 +80,51 @@ class App extends Component {
         reader.onloadend = () => {
             this.setState({privateKey: reader.result});
         };
+    };
+
+    uploadFile = async (event) => {
+        event.stopPropagation();
+        event.preventDefault();
+        if (event.target.files[0]) {
+            this.captureFile(event);
+
+            //bring in user's metamask account address
+            const accounts = await web3.eth.getAccounts();
+            storehash.methods.getUser(accounts[0]).call({
+                    from: accounts[0]
+                }, (errGetUser, resGetUser) => {
+                    if (errGetUser) {
+                        console.log("error getUser: ", errGetUser);
+                    } else {
+                        this.setState({userName: resGetUser[0]});
+                        // console.log("userName: ", resGetUser[0]);
+                        this.setState({pubKey: resGetUser[1]});
+                        console.log("pubKey: ", resGetUser[1]);
+                    }
+                }
+            );
+
+            const encrypted = this.crypt.encrypt(this.state.publicKeyJohn, this.state.buffer);
+            // console.log(encrypted.toString());
+            this.setState({msgEncrypto: encrypted});
+
+            const buffer = await Buffer.from(encrypted);
+            await ipfs.add(buffer, (err, ipfsHash) => {
+                if (err) {
+                    console.log(err);
+                } else {
+                    console.log(ipfsHash);
+                    //setState by setting ipfsHash to ipfsHash[0].hash
+                    this.setState({ipfsHash: ipfsHash[0].hash});
+                    storehash.methods.addFile(this.state.fileName, this.state.ipfsHash).send({
+                        from: accounts[0]
+                    }, (error, transactionHash) => {
+                        console.log(transactionHash);
+                        this.setState({transactionHash});
+                    });
+                }
+            })
+        }
     };
 
     onSubmit = async (event) => {
@@ -129,15 +153,15 @@ class App extends Component {
     getFilesFromSC = async () => {
         // bring in user's metamask account address
         const accounts = await web3.eth.getAccounts();
-        storehash.methods.getTodosArquivosUsuario().call({
+        storehash.methods.getFilesUser().call({
             from: accounts[0]
         }, (errAllFiles, resAllFiles) => {
             if (errAllFiles) {
                 console.log("error getFilesFromSC: ", errAllFiles);
             } else {
-                console.log("result: ", resAllFiles);
+                // console.log("result: ", resAllFiles);
                 for (let i = 0; i < resAllFiles.length; i++) {
-                    storehash.methods.getArquivo(resAllFiles[i]).call({
+                    storehash.methods.getFile(resAllFiles[i]).call({
                         from: accounts[0]
                     }, (errGetFile, resGetFile) => {
                         if (errGetFile) {
@@ -160,6 +184,8 @@ class App extends Component {
 
     };
 
+    // TODO validate account for the share https://web3js.readthedocs.io/en/1.0/web3-utils.html?highlight=isAddress#isaddress
+
     render() {
         return (
             <div className="App">
@@ -167,7 +193,7 @@ class App extends Component {
                 <Typography variant="subtitle1" color="inherit">
                     Escolha um arquivo para enviar para a blockchain
                 </Typography>
-                <Btn captureFile={this.captureFile}/>
+                <Btn uploadFile={this.uploadFile}/>
                 <hr/>
                 <Button onClick={this.encrypto}>Encrypto</Button>
                 <p>IPFS Hash</p>

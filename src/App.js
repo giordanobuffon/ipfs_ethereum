@@ -28,12 +28,18 @@ class App extends Component {
                 final: 0,
                 iEncrypt: 0,
                 fEncrypt: 0,
+                iDecrypt: 0,
+                fDecrypt: 0,
                 iBufFile: 0,
                 fBufFile: 0,
+                iFileBuffer: 0,
+                fFileBuffer: 0,
                 iBufEncrypt: 0,
                 fBufEncrypt: 0,
                 iIpfsAdd: 0,
                 fIpfsAdd: 0,
+                iIpfsGet: 0,
+                fIpfsGet: 0,
                 iScAddFile: 0,
                 fScAddFile: 0
             }
@@ -43,12 +49,27 @@ class App extends Component {
 
     };
 
+    zera() {
+        this.setState({
+            time: {
+                initial: 0,
+                final: 0,
+                iDecrypt: 0,
+                fDecrypt: 0,
+                iBufFile: 0,
+                fBufFile: 0,
+                iIpfsGet: 0,
+                fIpfsGet: 0
+            }
+        });
+    }
+
     getTime(time) {
         let d = new Date();
         this.setState(
             (e) => e.time[time] = d.getTime()
         );
-        console.log(time, d.getTime());
+        // console.log(time, d.getTime());
     }
 
     // Take file input from user
@@ -66,22 +87,23 @@ class App extends Component {
 
     // Convert the file to buffer to store on IPFS
     convertToBuffer = async (reader) => {
-        this.getTime("iBufFile");
+        this.getTime("iFileBuffer");
         //file is converted to a buffer for upload to IPFS
         const buffer = await Buffer.from(reader.result);
         //set this buffer-using es6 syntax
         this.setState({buffer});
-        this.getTime("fBufFile");
+        this.getTime("fFileBuffer");
     };
 
     getKey = (event) => {
         let reader = new FileReader();
-
-        let file = event.target.files[0];
-        reader.readAsText(file);
-        reader.onloadend = () => {
-            this.setState({privKey: reader.result});
-        };
+        if (event.target.files[0]) {
+            let file = event.target.files[0];
+            reader.readAsText(file);
+            reader.onloadend = () => {
+                this.setState({privKey: reader.result});
+            };
+        }
     };
 
     uploadFile = async (event) => {
@@ -142,22 +164,37 @@ class App extends Component {
         }
     };
 
-    downloadFile = async (hash) => {
-        console.log("download: ", hash);
+    downloadFile = async (hash, name) => {
+
+        this.zera();
+
+        this.getTime("initial");
+        this.setState({fileName: name});
+
+        this.getTime("iIpfsGet");
+
         await ipfs.get(hash, (err, ipfsResult) => {
             if (err) {
                 console.log(err);
             } else {
-                console.log("sucesso ", ipfsResult[0].content.toString());
-                let md = this.crypt.decrypt(this.state.privKey, ipfsResult[0].content.toString());
-                console.log(md);
+                this.getTime("fIpfsGet");
 
+                console.log("sucesso ", ipfsResult[0].content.toString());
+
+                this.getTime("iDecrypt");
+                let md = this.crypt.decrypt(this.state.privKey, ipfsResult[0].content.toString());
+                this.getTime("fDecrypt");
+
+                // console.log(md);
+                this.getTime("iBufFile");
                 const file = new Blob([md.message], {type: '.txt'});
                 let url = window.URL.createObjectURL(file);
                 let down = document.createElement('a');
                 down.href = url;
-                down.setAttribute('download', 'filename.txt');
+                down.setAttribute('download', name);
                 down.click();
+                this.getTime("fBufFile");
+                this.getTime("final");
             }
         })
     };
@@ -187,6 +224,13 @@ class App extends Component {
                             };
                             let newArray = this.state.files.slice();
                             newArray.push(file);
+                            newArray.sort(function (a, b) {
+                                if (a.name > b.name) {
+                                    return -1;
+                                } else if (a.name < b.name) {
+                                    return 1;
+                                } else return 0;
+                            });
                             this.setState({files: newArray});
                         }
                     });
@@ -218,18 +262,25 @@ class App extends Component {
                     onChange={this.getKey}
                 />
                 <hr/>
-                <p>Tamanho {this.state.fileName}</p>
-                <p>Buffer File {this.state.time.fBufFile - this.state.time.iBufFile}</p>
-                <p>Encrypt {this.state.time.fEncrypt - this.state.time.iEncrypt}</p>
-                <p>Buffer Encrypt {this.state.time.fBufEncrypt - this.state.time.iBufEncrypt}</p>
-                <p>IPFS add {this.state.time.fIpfsAdd - this.state.time.iIpfsAdd}</p>
-                <p>SC add {this.state.time.fScAddFile - this.state.time.iScAddFile}</p>
+                <p>Nome {this.state.fileName}</p>
+                {/*UPLOAD*/}
+                {/*<p>Buffer File {this.state.time.fFileBuffer - this.state.time.iFileBuffer}</p>*/}
+                {/*<p>Encrypt {this.state.time.fEncrypt - this.state.time.iEncrypt}</p>*/}
+                {/*<p>Buffer Encrypt {this.state.time.fBufEncrypt - this.state.time.iBufEncrypt}</p>*/}
+                {/*<p>IPFS add {this.state.time.fIpfsAdd - this.state.time.iIpfsAdd}</p>*/}
+                {/*<p>SC add {this.state.time.fScAddFile - this.state.time.iScAddFile}</p>*/}
+
+                {/*DOWNLOAD*/}
+                <p>IPFS get {this.state.time.fIpfsGet - this.state.time.iIpfsGet}</p>
+                <p>Decrypt {this.state.time.fDecrypt - this.state.time.iDecrypt}</p>
+                <p>Buf to File {this.state.time.fBufFile - this.state.time.iBufFile}</p>
+
                 <p>Total {this.state.time.final - this.state.time.initial}</p>
                 <hr/>
                 <InteractiveList
                     files={this.state.files}
-                    downloadFile={(hash) => {
-                        this.downloadFile(hash);
+                    downloadFile={(hash, name) => {
+                        this.downloadFile(hash, name);
                     }}/>
             </div>
         );

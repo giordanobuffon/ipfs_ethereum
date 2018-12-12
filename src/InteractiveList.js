@@ -58,7 +58,7 @@ class InteractiveList extends React.Component {
                                                         <IconButton
                                                             aria-label="Download"
                                                             onClick={() => {
-                                                                this.props.downloadFile(file.hash);
+                                                                this.props.downloadFile(file.hash, file.name);
                                                             }}>
                                                             <CloudDownloadIcon/>
                                                         </IconButton>

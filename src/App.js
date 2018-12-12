@@ -2,7 +2,6 @@ import React, {Component} from 'react';
 import web3 from './web3';
 import ipfs from './ipfs';
 import storehash from './storehash';
-import {Button} from 'reactstrap';
 import AppBar from "./AppBar";
 import InteractiveList from "./InteractiveList";
 import Btn from "./Btn";
@@ -19,21 +18,38 @@ class App extends Component {
             ipfsHash: null,
             buffer: '',
             fileName: '',
-            ethAddress: '',
             transactionHash: '',
-            txReceipt: '',
-            key: '',
             files: [],
-            msgEncrypto: '',
-            msgDecrypto: 'nada',
             userName: '',
             pubKey: '',
-            privateKey: ''
+            privKey: '',
+            time: {
+                initial: 0,
+                final: 0,
+                iEncrypt: 0,
+                fEncrypt: 0,
+                iBufFile: 0,
+                fBufFile: 0,
+                iBufEncrypt: 0,
+                fBufEncrypt: 0,
+                iIpfsAdd: 0,
+                fIpfsAdd: 0,
+                iScAddFile: 0,
+                fScAddFile: 0
+            }
         };
 
         this.getFilesFromSC();
 
     };
+
+    getTime(time) {
+        let d = new Date();
+        this.setState(
+            (e) => e.time[time] = d.getTime()
+        );
+        console.log(time, d.getTime());
+    }
 
     // Take file input from user
     captureFile = (event) => {
@@ -50,16 +66,12 @@ class App extends Component {
 
     // Convert the file to buffer to store on IPFS
     convertToBuffer = async (reader) => {
+        this.getTime("iBufFile");
         //file is converted to a buffer for upload to IPFS
         const buffer = await Buffer.from(reader.result);
         //set this buffer-using es6 syntax
         this.setState({buffer});
-    };
-
-    decrypto = async () => {
-        let md = this.crypt.decrypt(this.state.privateKey, this.state.msgEncrypto);
-        this.setState({msgDecrypto: md.message});
-        console.log(md.message);
+        this.getTime("fBufFile");
     };
 
     getKey = (event) => {
@@ -68,11 +80,12 @@ class App extends Component {
         let file = event.target.files[0];
         reader.readAsText(file);
         reader.onloadend = () => {
-            this.setState({privateKey: reader.result});
+            this.setState({privKey: reader.result});
         };
     };
 
     uploadFile = async (event) => {
+        this.getTime("initial");
         event.stopPropagation();
         event.preventDefault();
         if (event.target.files[0]) {
@@ -88,25 +101,37 @@ class App extends Component {
                     } else {
                         this.setState({userName: resGetUser[0]});
                         this.setState({pubKey: resGetUser[1]});
-                        const encrypted = this.crypt.encrypt(this.state.pubKey, this.state.buffer);
-                        this.setState({msgEncrypto: encrypted});
 
+                        this.getTime("iEncrypt");
+                        const encrypted = this.crypt.encrypt(this.state.pubKey, this.state.buffer);
+                        this.getTime("fEncrypt");
+
+                        this.getTime("iBufEncrypt");
                         const buffer = await Buffer.from(encrypted);
+                        this.getTime("fBufEncrypt");
+
+                        this.getTime("iIpfsAdd");
                         await ipfs.add(buffer, (err, ipfsHash) => {
                             if (err) {
                                 console.log(err);
                             } else {
+                                this.getTime("fIpfsAdd");
+
                                 console.log(ipfsHash);
                                 //setState by setting ipfsHash to ipfsHash[0].hash
                                 this.setState({ipfsHash: ipfsHash[0].hash});
+
+                                this.getTime("iScAddFile");
                                 storehash.methods.addFile(this.state.fileName, this.state.ipfsHash).send({
                                     from: accounts[0]
                                 }, (errorAddFile, transactionHash) => {
                                     if (errorAddFile) {
                                         console.log("error addFile: ", errorAddFile);
                                     } else {
+                                        this.getTime("fScAddFile");
                                         console.log(transactionHash);
                                         this.setState({transactionHash});
+                                        this.getTime("final");
                                     }
                                 });
                             }
@@ -115,6 +140,26 @@ class App extends Component {
                 }
             );
         }
+    };
+
+    downloadFile = async (hash) => {
+        console.log("download: ", hash);
+        await ipfs.get(hash, (err, ipfsResult) => {
+            if (err) {
+                console.log(err);
+            } else {
+                console.log("sucesso ", ipfsResult[0].content.toString());
+                let md = this.crypt.decrypt(this.state.privKey, ipfsResult[0].content.toString());
+                console.log(md);
+
+                const file = new Blob([md.message], {type: '.txt'});
+                let url = window.URL.createObjectURL(file);
+                let down = document.createElement('a');
+                down.href = url;
+                down.setAttribute('download', 'filename.txt');
+                down.click();
+            }
+        })
     };
 
     getFilesFromSC = async () => {
@@ -163,17 +208,29 @@ class App extends Component {
                 <Btn uploadFile={this.uploadFile}/>
                 <hr/>
                 <p>IPFS Hash</p>
-                <a href={`https://ipfs.io/ipfs/` + this.state.ipfsHash} target="_blank"
-                   rel="noopener noreferrer">{this.state.ipfsHash}</a>
+                <a href={`https://ipfs.io/ipfs/` + this.state.ipfsHash}
+                   target="_blank"
+                   rel="noopener noreferrer">{this.state.ipfsHash}
+                </a>
                 <hr/>
                 <input
                     type="file"
                     onChange={this.getKey}
                 />
-                <Button onClick={this.decrypto}>Decrypto</Button>
-                <p>{this.state.msgDecrypto}</p>
                 <hr/>
-                <InteractiveList files={this.state.files}/>
+                <p>Tamanho {this.state.fileName}</p>
+                <p>Buffer File {this.state.time.fBufFile - this.state.time.iBufFile}</p>
+                <p>Encrypt {this.state.time.fEncrypt - this.state.time.iEncrypt}</p>
+                <p>Buffer Encrypt {this.state.time.fBufEncrypt - this.state.time.iBufEncrypt}</p>
+                <p>IPFS add {this.state.time.fIpfsAdd - this.state.time.iIpfsAdd}</p>
+                <p>SC add {this.state.time.fScAddFile - this.state.time.iScAddFile}</p>
+                <p>Total {this.state.time.final - this.state.time.initial}</p>
+                <hr/>
+                <InteractiveList
+                    files={this.state.files}
+                    downloadFile={(hash) => {
+                        this.downloadFile(hash);
+                    }}/>
             </div>
         );
     }

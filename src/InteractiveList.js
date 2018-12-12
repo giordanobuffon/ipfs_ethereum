@@ -13,7 +13,7 @@ import CloudDownloadIcon from '@material-ui/icons/CloudDownload';
 const styles = theme => ({
     root: {
         flexGrow: 1,
-        maxWidth: 752,
+        // maxWidth: 752,
     },
     demo: {
         backgroundColor: theme.palette.background.paper,
@@ -58,7 +58,7 @@ class InteractiveList extends React.Component {
                                                         <IconButton
                                                             aria-label="Download"
                                                             onClick={() => {
-                                                                console.log('click download')
+                                                                this.props.downloadFile(file.hash);
                                                             }}>
                                                             <CloudDownloadIcon/>
                                                         </IconButton>

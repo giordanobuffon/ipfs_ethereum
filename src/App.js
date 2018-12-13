@@ -16,6 +16,7 @@ class App extends Component {
         this.crypt = new Crypt();
 
         this.state = {
+            t: 10,
             ipfsHash: null,
             buffer: '',
             fileName: '',
@@ -45,7 +46,13 @@ class App extends Component {
                 iScAddFile: 0,
                 fScAddFile: 0,
                 iScShareFile: 0,
-                fScShareFile: 0
+                fScShareFile: 0,
+                iGetFilesUser: 0,
+                fGetFilesUser: 0,
+                iGetAccounts: 0,
+                fGetAccounts: 0,
+                iForGetFile: 0,
+                fForGetFile: 0
             }
         };
 
@@ -82,24 +89,48 @@ class App extends Component {
     }
 
     getTime(time) {
-        let d = new Date();
+        let d = new Date().getTime();
         this.setState(
-            (e) => e.time[time] = d.getTime()
+            (e) => e.time[time] = d
         );
-        // console.log(time, d.getTime());
+        console.log(time, d);
     }
 
     getFilesFromSC = async () => {
-        // bring in user's metamask account address
+        let initial = new Date().getTime();
+        console.log(initial);
+
+        let iGetAccount = new Date().getTime();
         const accounts = await web3.eth.getAccounts();
+        let fGetAccount = new Date().getTime();
+
+        let iGetFilesUser = new Date().getTime();
         storehash.methods.getFilesUser().call({
             from: accounts[0]
-        }, (errAllFiles, resAllFiles) => {
+        }, async (errAllFiles, resAllFiles) => {
             if (errAllFiles) {
                 console.log("error getFilesFromSC: ", errAllFiles);
             } else {
+                this.setState({
+                    time: {
+                        initial: initial,
+                        iGetAccounts: iGetAccount,
+                        fGetAccounts: fGetAccount,
+                        iGetFilesUser: iGetFilesUser
+                    }
+                });
+                // console.log("inicial", this.state.time.initial);
+                // console.log("iGetAccounts", this.state.time.iGetAccounts);
+                // console.log("fGetAccounts", this.state.time.fGetAccounts);
+                // console.log("iGetFilesUser", this.state.time.iGetFilesUser);
+                this.getTime("fGetFilesUser");
+
                 // console.log("result: ", resAllFiles);
-                for (let i = 0; i < resAllFiles.length; i++) {
+                for (let i = 0; i < this.state.t; i++) {
+                // for (let i = 0; i < resAllFiles.length; i++) {
+                    if (i === 0) {
+                        this.getTime("iForGetFile");
+                    }
                     storehash.methods.getFile(resAllFiles[i]).call({
                         from: accounts[0]
                     }, (errGetFile, resGetFile) => {
@@ -122,6 +153,15 @@ class App extends Component {
                                 } else return 0;
                             });
                             this.setState({files: newArray});
+                            if (i === this.state.t - 1) {
+                            // if (i === resAllFiles.length - 1) {
+                                // console.log("i", i);
+                                this.getTime("fForGetFile");
+                                this.getTime("final");
+                                this.setState({fileName: this.state.files.length});
+                                // console.log("files", this.state.files.length);
+                                // console.log("files", this.state.files);
+                            }
                         }
                     });
                 }
@@ -352,7 +392,13 @@ class App extends Component {
                 {/*<p>Buf to File {this.state.time.fBufFile - this.state.time.iBufFile}</p>*/}
 
                 {/*SHARE*/}
-                <p>SC share {this.state.time.fScShareFile - this.state.time.iScShareFile}</p>
+                {/*<p>SC share {this.state.time.fScShareFile - this.state.time.iScShareFile}</p>*/}
+
+                {/*GET FILES*/}
+                <p>Get accounts {this.state.time.fGetAccounts - this.state.time.iGetAccounts}</p>
+                <p>Get Files User {this.state.time.fGetFilesUser - this.state.time.iGetFilesUser}</p>
+                <p>For Get
+                    File {(this.state.time.fForGetFile - this.state.time.iForGetFile) / this.state.files.length}</p>
 
                 <p>Total {this.state.time.final - this.state.time.initial}</p>
                 <hr/>

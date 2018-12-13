@@ -39,19 +39,22 @@ class InteractiveList extends React.Component {
                     <Grid item xs={12} md={6}>
                         <div className={classes.demo}>
                             <List dense={dense}>
+                                {/*{console.log(this.props.files)}*/}
                                 {this.props.files.length > 0 ?
                                     this.props.files.map((file) => {
                                             return <div key={file.id}>
+                                                    {/*{console.log(file)}*/}
                                                 <ListItem button={true}>
                                                     <ListItemText
                                                         primary={file.name}
-                                                        secondary={secondary ? 'Secondary text' : null}
+                                                        secondary={file.id}
+                                                        // secondary={secondary ? 'Secondary text' : null}
                                                     />
                                                     <ListItemSecondaryAction>
                                                         <IconButton
                                                             aria-label="Share"
                                                             onClick={() => {
-                                                                console.log('click share')
+                                                                this.props.shareFile(file);
                                                             }}>
                                                             <ShareIcon/>
                                                         </IconButton>

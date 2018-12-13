@@ -6,6 +6,7 @@ import AppBar from "./AppBar";
 import InteractiveList from "./InteractiveList";
 import Btn from "./Btn";
 import Typography from "@material-ui/core/es/Typography/Typography";
+import {Button} from "reactstrap";
 
 class App extends Component {
     constructor(props) {
@@ -23,6 +24,7 @@ class App extends Component {
             userName: '',
             pubKey: '',
             privKey: '',
+            accountToShare: '0x9b08DDFe9F51662E1D0688b84169F9a2053EE343',
             time: {
                 initial: 0,
                 final: 0,
@@ -41,7 +43,9 @@ class App extends Component {
                 iIpfsGet: 0,
                 fIpfsGet: 0,
                 iScAddFile: 0,
-                fScAddFile: 0
+                fScAddFile: 0,
+                iScShareFile: 0,
+                fScShareFile: 0
             }
         };
 
@@ -54,14 +58,27 @@ class App extends Component {
             time: {
                 initial: 0,
                 final: 0,
-                iDecrypt: 0,
-                fDecrypt: 0,
-                iBufFile: 0,
-                fBufFile: 0,
-                iIpfsGet: 0,
-                fIpfsGet: 0
+                // iEncrypt: 0,
+                // fEncrypt: 0,
+                // iDecrypt: 0,
+                // fDecrypt: 0,
+                // iBufFile: 0,
+                // fBufFile: 0,
+                // iFileBuffer: 0,
+                // fFileBuffer: 0,
+                // iBufEncrypt: 0,
+                // fBufEncrypt: 0,
+                // iIpfsAdd: 0,
+                // fIpfsAdd: 0,
+                // iIpfsGet: 0,
+                // fIpfsGet: 0,
+                // iScAddFile: 0,
+                // fScAddFile: 0,
+                iScShareFile: 0,
+                fScShareFile: 0
             }
         });
+        console.log(this.state.files);
     }
 
     getTime(time) {
@@ -71,6 +88,47 @@ class App extends Component {
         );
         // console.log(time, d.getTime());
     }
+
+    getFilesFromSC = async () => {
+        // bring in user's metamask account address
+        const accounts = await web3.eth.getAccounts();
+        storehash.methods.getFilesUser().call({
+            from: accounts[0]
+        }, (errAllFiles, resAllFiles) => {
+            if (errAllFiles) {
+                console.log("error getFilesFromSC: ", errAllFiles);
+            } else {
+                // console.log("result: ", resAllFiles);
+                for (let i = 0; i < resAllFiles.length; i++) {
+                    storehash.methods.getFile(resAllFiles[i]).call({
+                        from: accounts[0]
+                    }, (errGetFile, resGetFile) => {
+                        if (errGetFile) {
+                            console.log("error getFile: ", errGetFile);
+                        } else {
+                            let file = {
+                                id: i,
+                                name: resGetFile[0],
+                                usersWithAccess: resGetFile[1],
+                                hash: resGetFile[2]
+                            };
+                            let newArray = this.state.files.slice();
+                            newArray.push(file);
+                            newArray.sort(function (a, b) {
+                                if (a.name > b.name) {
+                                    return -1;
+                                } else if (a.name < b.name) {
+                                    return 1;
+                                } else return 0;
+                            });
+                            this.setState({files: newArray});
+                        }
+                    });
+                }
+            }
+        });
+
+    };
 
     // Take file input from user
     captureFile = (event) => {
@@ -166,8 +224,6 @@ class App extends Component {
 
     downloadFile = async (hash, name) => {
 
-        this.zera();
-
         this.getTime("initial");
         this.setState({fileName: name});
 
@@ -199,45 +255,60 @@ class App extends Component {
         })
     };
 
-    getFilesFromSC = async () => {
-        // bring in user's metamask account address
-        const accounts = await web3.eth.getAccounts();
-        storehash.methods.getFilesUser().call({
-            from: accounts[0]
-        }, (errAllFiles, resAllFiles) => {
-            if (errAllFiles) {
-                console.log("error getFilesFromSC: ", errAllFiles);
+    shareFile = async (file) => {
+        this.zera();
+
+        this.getTime("initial");
+
+        this.setState({fileName: file.name});
+        await ipfs.get(file.hash, async (err, ipfsResult) => {
+            if (err) {
+                console.log(err);
             } else {
-                // console.log("result: ", resAllFiles);
-                for (let i = 0; i < resAllFiles.length; i++) {
-                    storehash.methods.getFile(resAllFiles[i]).call({
+                let md = this.crypt.decrypt(this.state.privKey, ipfsResult[0].content.toString());
+
+                const accounts = await web3.eth.getAccounts();
+                storehash.methods.getUser(this.state.accountToShare).call({
                         from: accounts[0]
-                    }, (errGetFile, resGetFile) => {
-                        if (errGetFile) {
-                            console.log("error getFile: ", errGetFile);
+                    }, async (errGetUser, resGetUser) => {
+                        if (errGetUser) {
+                            console.log("error getUser: ", errGetUser);
                         } else {
-                            let file = {
-                                id: i,
-                                name: resGetFile[0],
-                                usersWithAccess: resGetFile[1],
-                                hash: resGetFile[2]
-                            };
-                            let newArray = this.state.files.slice();
-                            newArray.push(file);
-                            newArray.sort(function (a, b) {
-                                if (a.name > b.name) {
-                                    return -1;
-                                } else if (a.name < b.name) {
-                                    return 1;
-                                } else return 0;
-                            });
-                            this.setState({files: newArray});
+
+                            this.setState({userName: resGetUser[0]});
+                            this.setState({pubKey: resGetUser[1]});
+
+                            const encrypted = this.crypt.encrypt(this.state.pubKey, md.message);
+
+                            const buffer = await Buffer.from(encrypted);
+
+                            await ipfs.add(buffer, (err, ipfsHash) => {
+                                if (err) {
+                                    console.log(err);
+                                } else {
+                                    //setState by setting ipfsHash to ipfsHash[0].hash
+                                    this.setState({ipfsHash: ipfsHash[0].hash});
+
+                                    this.getTime("iScShareFile");
+                                    storehash.methods.shareFile(file.id, this.state.accountToShare, this.state.ipfsHash).send({
+                                        from: accounts[0]
+                                    }, (errorAddFile, transactionHash) => {
+                                        if (errorAddFile) {
+                                            console.log("error addFile: ", errorAddFile);
+                                        } else {
+                                            this.getTime("fScShareFile");
+                                            console.log(transactionHash);
+                                            this.setState({transactionHash});
+                                            this.getTime("final");
+                                        }
+                                    });
+                                }
+                            })
                         }
-                    });
-                }
+                    }
+                );
             }
         });
-
     };
 
     // TODO validate account for the share https://web3js.readthedocs.io/en/1.0/web3-utils.html?highlight=isAddress#isaddress
@@ -261,6 +332,11 @@ class App extends Component {
                     type="file"
                     onChange={this.getKey}
                 />
+                <Button
+                    onClick={() => {
+                        this.zera()
+                    }}
+                >Zerar</Button>
                 <hr/>
                 <p>Nome {this.state.fileName}</p>
                 {/*UPLOAD*/}
@@ -271,9 +347,12 @@ class App extends Component {
                 {/*<p>SC add {this.state.time.fScAddFile - this.state.time.iScAddFile}</p>*/}
 
                 {/*DOWNLOAD*/}
-                <p>IPFS get {this.state.time.fIpfsGet - this.state.time.iIpfsGet}</p>
-                <p>Decrypt {this.state.time.fDecrypt - this.state.time.iDecrypt}</p>
-                <p>Buf to File {this.state.time.fBufFile - this.state.time.iBufFile}</p>
+                {/*<p>IPFS get {this.state.time.fIpfsGet - this.state.time.iIpfsGet}</p>*/}
+                {/*<p>Decrypt {this.state.time.fDecrypt - this.state.time.iDecrypt}</p>*/}
+                {/*<p>Buf to File {this.state.time.fBufFile - this.state.time.iBufFile}</p>*/}
+
+                {/*SHARE*/}
+                <p>SC share {this.state.time.fScShareFile - this.state.time.iScShareFile}</p>
 
                 <p>Total {this.state.time.final - this.state.time.initial}</p>
                 <hr/>
@@ -281,7 +360,11 @@ class App extends Component {
                     files={this.state.files}
                     downloadFile={(hash, name) => {
                         this.downloadFile(hash, name);
-                    }}/>
+                    }}
+                    shareFile={(file) => {
+                        this.shareFile(file);
+                    }}
+                />
             </div>
         );
     }

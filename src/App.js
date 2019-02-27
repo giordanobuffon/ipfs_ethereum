@@ -65,22 +65,22 @@ class App extends Component {
             time: {
                 initial: 0,
                 final: 0,
-                // iEncrypt: 0,
-                // fEncrypt: 0,
-                // iDecrypt: 0,
-                // fDecrypt: 0,
-                // iBufFile: 0,
-                // fBufFile: 0,
-                // iFileBuffer: 0,
-                // fFileBuffer: 0,
-                // iBufEncrypt: 0,
-                // fBufEncrypt: 0,
-                // iIpfsAdd: 0,
-                // fIpfsAdd: 0,
-                // iIpfsGet: 0,
-                // fIpfsGet: 0,
-                // iScAddFile: 0,
-                // fScAddFile: 0,
+                iEncrypt: 0,
+                fEncrypt: 0,
+                iDecrypt: 0,
+                fDecrypt: 0,
+                iBufFile: 0,
+                fBufFile: 0,
+                iFileBuffer: 0,
+                fFileBuffer: 0,
+                iBufEncrypt: 0,
+                fBufEncrypt: 0,
+                iIpfsAdd: 0,
+                fIpfsAdd: 0,
+                iIpfsGet: 0,
+                fIpfsGet: 0,
+                iScAddFile: 0,
+                fScAddFile: 0,
                 iScShareFile: 0,
                 fScShareFile: 0
             }
@@ -351,7 +351,6 @@ class App extends Component {
         });
     };
 
-    // TODO validate account for the share https://web3js.readthedocs.io/en/1.0/web3-utils.html?highlight=isAddress#isaddress
 
     render() {
         return (
@@ -387,18 +386,18 @@ class App extends Component {
                 {/*<p>SC add {this.state.time.fScAddFile - this.state.time.iScAddFile}</p>*/}
 
                 {/*DOWNLOAD*/}
-                {/*<p>IPFS get {this.state.time.fIpfsGet - this.state.time.iIpfsGet}</p>*/}
-                {/*<p>Decrypt {this.state.time.fDecrypt - this.state.time.iDecrypt}</p>*/}
-                {/*<p>Buf to File {this.state.time.fBufFile - this.state.time.iBufFile}</p>*/}
+                <p>IPFS get {this.state.time.fIpfsGet - this.state.time.iIpfsGet}</p>
+                <p>Decrypt {this.state.time.fDecrypt - this.state.time.iDecrypt}</p>
+                <p>Buf to File {this.state.time.fBufFile - this.state.time.iBufFile}</p>
 
                 {/*SHARE*/}
                 {/*<p>SC share {this.state.time.fScShareFile - this.state.time.iScShareFile}</p>*/}
 
                 {/*GET FILES*/}
-                <p>Get accounts {this.state.time.fGetAccounts - this.state.time.iGetAccounts}</p>
-                <p>Get Files User {this.state.time.fGetFilesUser - this.state.time.iGetFilesUser}</p>
-                <p>For Get
-                    File {(this.state.time.fForGetFile - this.state.time.iForGetFile) / this.state.files.length}</p>
+                {/*<p>Get accounts {this.state.time.fGetAccounts - this.state.time.iGetAccounts}</p>*/}
+                {/*<p>Get Files User {this.state.time.fGetFilesUser - this.state.time.iGetFilesUser}</p>*/}
+                {/*<p>For Get*/}
+                    {/*File {(this.state.time.fForGetFile - this.state.time.iForGetFile) / this.state.files.length}</p>*/}
 
                 <p>Total {this.state.time.final - this.state.time.initial}</p>
                 <hr/>

@@ -47,8 +47,8 @@ class InteractiveList extends React.Component {
                                                 <ListItem button={true}>
                                                     <ListItemText
                                                         primary={file.name}
-                                                        secondary={file.id}
-                                                        // secondary={secondary ? 'Secondary text' : null}
+                                                        // secondary={file.id}
+                                                        secondary={secondary ? 'Secondary text' : null}
                                                     />
                                                     <ListItemSecondaryAction>
                                                         <IconButton
